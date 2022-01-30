@@ -3,6 +3,8 @@ const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
 const cookieparser = require("cookie-parser");
+const bcrypt = require('bcryptjs');
+
 
 app.set("view engine", "ejs");
 
@@ -42,16 +44,6 @@ const getUserByEmail = function(email) {
   return null;
 }
 
-/*const getOwnersLinks = (ownerID) => {
-    const ownersLinks = {};
-    for (let key in urlDatabase) {
-      if (urlDatabase[key].userID === ownerID) {
-        ownersLinks[key] = urlDatabase[key];
-      }
-    }
-    return ownersLinks;
-  }; */
-
 const getUrlsForUser = function(ownerID) {
   const result = {};
   for (const key in urlDatabase) {
@@ -63,7 +55,7 @@ const getUrlsForUser = function(ownerID) {
 }
 
 const generateRandomString = function() {
-  const str = "";
+  let str = "";
   const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   for (let i = 0; i < 6; i++) {
      str += possible.charAt(Math.floor(Math.random() * possible.length));
@@ -112,8 +104,16 @@ app.post("/register", (req, res) => {
   if (user) {
     return res.status(400).send("Email has already existed. Please <a href='/register'>try again</a>");
   }
-
-  res.cookie("user_id", id);
+  const newID = generateRandomString();
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  const newUser = { 
+    id: newID,
+    email: email,
+    password: hashedPassword
+  };
+  //Add newUser to the users object.
+  users[newID] = newUser;
+  res.cookie("user_id", newID);
   res.redirect('/urls');
 })
 // private /url endpoints
