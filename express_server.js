@@ -1,11 +1,12 @@
 const express = require("express");
 const app = express();
-const PORT = 8080;
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
+const { getUserByEmail } = require('./helpers.js');
+const PORT = 8080;
 
-
+// view engine setup
 app.set("view engine", "ejs");
 
 app.use(bodyParser.urlencoded({extended: true}));
@@ -27,6 +28,8 @@ const urlDatabase = {
   }
 };
 
+// Users Data
+
 const users = {
   "userOneID": {
     id: "userOneID",
@@ -38,16 +41,6 @@ const users = {
     email: "usertwo@email.com",
     password: "morning"
   },
-}
-
-const getUserByEmail = function(email) {
-  const validUsers = Object.values(users);
-  for (const user of validUsers) {
-    if (user.email === email) {
-      return user;
-    }
-  } 
-  return null;
 }
 
 const getUrlsForUser = function(ownerID) {
@@ -81,7 +74,7 @@ app.get('/login', (req,res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
   if (!user || !user.password === password) {
     return res.send("Invalid credentials.Please <a href='/login'>try again</a>");
   }
@@ -104,7 +97,7 @@ app.post("/register", (req, res) => {
   if (!email || !password) {
     return res.send("Email or password isn't available.Please <a href='/register'>try again</a>");
   }
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
   if (user) {
     return res.status(400).send("Email has already existed. Please <a href='/register'>try again</a>");
   }
@@ -120,6 +113,7 @@ app.post("/register", (req, res) => {
   req.session.user_id = newID;
   res.redirect('/urls');
 })
+
 // private /url endpoints
 app.get("/urls", (req, res) => {
   const userID = req.session.user_id;
@@ -141,12 +135,11 @@ app.get("urls/new", (req, res) => {
   if (!user) {
     return res.redirect("/login");
   }
-
   res.render("urls_new", { user });
 });
 
+
 app.post("/urls", (req, res) => {
-  
   const userID = req.cookies['user_id'];
   const user = users[userID];
   if (!user) {
