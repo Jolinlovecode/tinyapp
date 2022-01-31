@@ -2,14 +2,20 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
-const cookieparser = require("cookie-parser");
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 
 
 app.set("view engine", "ejs");
 
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieparser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ["abcde"],
+
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
+
 const urlDatabase = {
   "b2xVn2": {
     longURL:"http://www.lighthouselabs.ca",
@@ -63,10 +69,8 @@ const generateRandomString = function() {
   return str;
 };
 
-
-
 app.get('/login', (req,res) => {
-  const id = req.cookies['user_id'];
+  const id = req.session['user_id'];
   const user = users[id];
   if (user) {
     return res.redirect("/urls");
@@ -81,17 +85,17 @@ app.post("/login", (req, res) => {
   if (!user || !user.password === password) {
     return res.send("Invalid credentials.Please <a href='/login'>try again</a>");
   }
-  res.cookie("user_id", user.id);
+  req.session.user_id = user.id;
   res.redirect('/urls');
 })
 
 app.get('/register', (req,res) => {
-  const id = req.cookies['user_id'];
+  const id = req.session['user_id'];
   const user = users[id];
-  const templateVars = {
-    user,
+  if (user) {
+    return res.redirect('/urls');
   }
-  res.render('register', templateVars);
+  res.render('register', {user});
 });
 
 app.post("/register", (req, res) => {
@@ -113,12 +117,12 @@ app.post("/register", (req, res) => {
   };
   //Add newUser to the users object.
   users[newID] = newUser;
-  res.cookie("user_id", newID);
+  req.session.user_id = newID;
   res.redirect('/urls');
 })
 // private /url endpoints
 app.get("/urls", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   console.log(userID)
   const templateVars = {
     user: users[userID],
@@ -156,7 +160,7 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req,res) => {
-  const userID = req.cookies['user_id'];
+  const userID = req.session['user_id'];
   const user = users[userID];
   if(!userID || !user) {
     return res.status(401).send("You must <a href='/login'>login</a>");
@@ -179,7 +183,7 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
-  const userID = req.cookies["user_id"];
+  const userID = req.session["user_id"];
   const user = users[userID];
 
   const url = urlDatabase[shortURL];
@@ -191,7 +195,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  req.session['user_id'] = null;
   res.redirect('/urls');
 })
 
