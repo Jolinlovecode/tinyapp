@@ -9,6 +9,7 @@ const PORT = 8080;
 // view engine setup
 app.set("view engine", "ejs");
 
+// middleware
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
   name: 'session',
@@ -17,6 +18,7 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
 
+//urlDatabase data
 const urlDatabase = {
   "b2xVn2": {
     longURL:"http://www.lighthouselabs.ca",
@@ -29,7 +31,6 @@ const urlDatabase = {
 };
 
 // Users Data
-
 const users = {
   "userOneID": {
     id: "userOneID",
@@ -42,7 +43,7 @@ const users = {
     password: "morning"
   },
 }
-
+// get longURL by ID
 const getUrlsForUser = function(ownerID) {
   const result = {};
   for (const key in urlDatabase) {
@@ -62,6 +63,7 @@ const generateRandomString = function() {
   return str;
 };
 
+// routes
 app.get('/', (req,res) => {
   const id = req.session['user_id'];
   const user = users[id];
@@ -72,7 +74,7 @@ app.get('/', (req,res) => {
   
 });
 
-
+//login
 app.get('/login', (req,res) => {
   const id = req.session['user_id'];
   const user = users[id];
@@ -81,6 +83,7 @@ app.get('/login', (req,res) => {
   }
   res.render('login', { user });
 });
+
 
 app.post("/login", (req, res) => {
   const email = req.body.email;
@@ -93,6 +96,7 @@ app.post("/login", (req, res) => {
   res.redirect('/urls');
 })
 
+//register
 app.get('/register', (req,res) => {
   const id = req.session.user_id;
   const user = users[id];
@@ -102,6 +106,7 @@ app.get('/register', (req,res) => {
   res.render('register', {user});
 });
 
+
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -110,7 +115,7 @@ app.post("/register", (req, res) => {
   }
   const user = getUserByEmail(email, users);
   if (user) {
-    return res.status(400).send("Email has already existed. Please <a href='/register'>try again</a>");
+    return res.status(400).send("Email has already existed. Please <a href='/login'>try again</a>");
   }
   const newID = generateRandomString();
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -139,7 +144,7 @@ app.get("/urls", (req, res) => {
   return res.status(401).send("You need to <a href='/login'>login</a> first");
 });
 
-
+//route 
 app.get("/urls/new", (req, res) => {
   const id = req.session.user_id;
   const user = users[id];
@@ -211,6 +216,7 @@ app.post("/logout", (req, res) => {
   delete req.session.user_id;
   res.redirect('/urls');
 });
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
