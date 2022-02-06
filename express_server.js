@@ -62,6 +62,17 @@ const generateRandomString = function() {
   return str;
 };
 
+app.get('/', (req,res) => {
+  const id = req.session['user_id'];
+  const user = users[id];
+  if (user) {
+    return res.redirect("/urls");
+  } 
+  return res.redirect("/login");
+  
+});
+
+
 app.get('/login', (req,res) => {
   const id = req.session['user_id'];
   const user = users[id];
@@ -83,7 +94,7 @@ app.post("/login", (req, res) => {
 })
 
 app.get('/register', (req,res) => {
-  const id = req.session['user_id'];
+  const id = req.session.user_id;
   const user = users[id];
   if (user) {
     return res.redirect('/urls');
@@ -107,7 +118,8 @@ app.post("/register", (req, res) => {
     id: newID,
     email: email,
     password: hashedPassword
-  };
+   };
+  
   //Add newUser to the users object.
   users[newID] = newUser;
   req.session.user_id = newID;
@@ -117,7 +129,6 @@ app.post("/register", (req, res) => {
 // private /url endpoints
 app.get("/urls", (req, res) => {
   const userID = req.session.user_id;
-  console.log(userID)
   const templateVars = {
     user: users[userID],
     urls: getUrlsForUser(userID),
@@ -129,8 +140,8 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-app.get("urls/new", (req, res) => {
-  const id = req.cookies['user_id'];
+app.get("/urls/new", (req, res) => {
+  const id = req.session.user_id;
   const user = users[id];
   if (!user) {
     return res.redirect("/login");
@@ -139,8 +150,8 @@ app.get("urls/new", (req, res) => {
 });
 
 
-app.post("/urls", (req, res) => {
-  const userID = req.cookies['user_id'];
+app.post("/urls/new", (req, res) => {
+  const userID = req.session.user_id;
   const user = users[userID];
   if (!user) {
     return res.redirect('/login');
@@ -153,18 +164,25 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req,res) => {
-  const userID = req.session['user_id'];
+  const userID = req.session.user_id;
   const user = users[userID];
+  const templateVars = {
+    user: users[userID],
+    urls: getUrlsForUser(userID),
+  };
   if(!userID || !user) {
     return res.status(401).send("You must <a href='/login'>login</a>");
   }
-
-  const shortURL =req.params.shortURL;
-  const url = urlDatabase[shortURL];
+  
+  // const shortURL = userID;
+  const url = urlDatabase[req.params.shortURL];
+  // clicking create new url gives an error on line 181 for unknown reason, not correct route
   if (url.userID !== user.id) {
     return res.status(400).send("You can't access to this URL. Please <a href='/login'>login</a>")
   }
-})
+  // params means from URL bar up top. and body is from a form:register, login
+  res.render('urls_show', templateVars);
+});
 
 app.post("/urls/:shortURL/edit", (req, res) => {
   let shortURL = req.params.shortURL;       
@@ -188,7 +206,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 
 app.post("/logout", (req, res) => {
-  req.session['user_id'] = null;
+  delete req.session.user_id;
   res.redirect('/urls');
 })
 
