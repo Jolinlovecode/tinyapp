@@ -139,6 +139,7 @@ app.get("/urls", (req, res) => {
   return res.status(401).send("You need to <a href='/login'>login</a> first");
 });
 
+
 app.get("/urls/new", (req, res) => {
   const id = req.session.user_id;
   const user = users[id];
@@ -163,6 +164,7 @@ app.post("/urls/new", (req, res) => {
   res.redirect(`/urls/${shortURL}`);         
 });
 
+
 app.get("/urls/:shortURL", (req,res) => {
   const userID = req.session.user_id;
   const user = users[userID];
@@ -177,6 +179,7 @@ app.get("/urls/:shortURL", (req,res) => {
     urls: url,
     shortURL: req.params.shortURL
   };
+
   if (url.userID !== user.id) {
     return res.status(400).send("You can't access to this URL. Please <a href='/login'>login</a>")
   }
@@ -213,5 +216,3 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-// your education gets you your first job only
-// even if university 
