@@ -133,11 +133,10 @@ app.get("/urls", (req, res) => {
     user: users[userID],
     urls: getUrlsForUser(userID),
   };
-
-  if (!users[userID]) {
-    return res.redirect('/login');
+  if (users[userID]) {
+    return res.render("urls_index", templateVars);
   }
-  res.render("urls_index", templateVars);
+  return res.status(401).send("You need to <a href='/login'>login</a> first");
 });
 
 app.get("/urls/new", (req, res) => {
@@ -151,6 +150,7 @@ app.get("/urls/new", (req, res) => {
 
 
 app.post("/urls/new", (req, res) => {
+  // check that field is not empty
   const userID = req.session.user_id;
   const user = users[userID];
   if (!user) {
@@ -166,17 +166,17 @@ app.post("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req,res) => {
   const userID = req.session.user_id;
   const user = users[userID];
-  const templateVars = {
-    user: users[userID],
-    urls: getUrlsForUser(userID),
-  };
+
   if(!userID || !user) {
     return res.status(401).send("You must <a href='/login'>login</a>");
   }
   
-  // const shortURL = userID;
   const url = urlDatabase[req.params.shortURL];
-  // clicking create new url gives an error on line 181 for unknown reason, not correct route
+  const templateVars = {
+    user: users[userID],
+    urls: url,
+    shortURL: req.params.shortURL
+  };
   if (url.userID !== user.id) {
     return res.status(400).send("You can't access to this URL. Please <a href='/login'>login</a>")
   }
@@ -185,10 +185,9 @@ app.get("/urls/:shortURL", (req,res) => {
 });
 
 app.post("/urls/:shortURL/edit", (req, res) => {
-  let shortURL = req.params.shortURL;       
-  let longURL = req.body.longURL;       
-  urlDatabase[shortURL] = longURL;
-  console.log("hello", shortURL, longURL);
+  let shortURL = req.params.shortURL;
+  let longURL = req.body.longURL;
+  urlDatabase[shortURL].longURL = longURL;
   res.redirect('/urls');
 })
 
@@ -208,8 +207,11 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/logout", (req, res) => {
   delete req.session.user_id;
   res.redirect('/urls');
-})
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
+// your education gets you your first job only
+// even if university 
