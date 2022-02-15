@@ -144,6 +144,20 @@ app.get("/urls", (req, res) => {
   return res.status(401).send("You need to <a href='/login'>login</a> first");
 });
 
+//route  
+app.get("/u/:id", (req, res) => {
+  const id = req.session.user_id;   
+  const shortURL = req.params.id;
+  const longURL = urlDatabase[shortURL].longURL
+  
+  if (id) {
+    return res.redirect(longURL);
+  }
+  return res.status(400).send("error");
+})
+
+
+
 //route 
 app.get("/urls/new", (req, res) => {
   const id = req.session.user_id;
@@ -181,7 +195,7 @@ app.get("/urls/:shortURL", (req,res) => {
   const url = urlDatabase[req.params.shortURL];
   const templateVars = {
     user: users[userID],
-    urls: url,
+    longURL: urlDatabase[req.params.shortURL].longURL,
     shortURL: req.params.shortURL
   };
 
