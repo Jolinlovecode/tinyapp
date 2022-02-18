@@ -126,8 +126,8 @@ app.post("/register", (req, res) => {
    };
   
   //Add newUser to the users object.
-  users[newID] = newUser;
-  req.session.user_id = newID;
+  const users[newID] = newUser;
+  const req.session.user_id = newID;
   res.redirect('/urls');
 })
 
@@ -195,8 +195,8 @@ app.get("/urls/:shortURL", (req,res) => {
   const url = urlDatabase[req.params.shortURL];
   const templateVars = {
     user: users[userID],
-    longURL: urlDatabase[req.params.shortURL].longURL,
-    shortURL: req.params.shortURL
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL].longURL
   };
 
   if (url.userID !== user.id) {
