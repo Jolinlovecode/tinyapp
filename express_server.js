@@ -126,8 +126,8 @@ app.post("/register", (req, res) => {
    };
   
   //Add newUser to the users object.
-  const users[newID] = newUser;
-  const req.session.user_id = newID;
+  users[newID] = newUser;
+  req.session.user_id = newID;
   res.redirect('/urls');
 })
 
